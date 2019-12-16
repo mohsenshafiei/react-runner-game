@@ -19,6 +19,9 @@ export const Runner = () => {
   const [gameOver, setGameOver] = useState(false);
   const [runner, setRunner] = useState(RUNNER_START);
   const [dir, setDir] = useState([0, 0]);
+  const [xMouse, setXMouse] = useState(0);
+  const [yMouse, setYMouse] = useState(0);
+
 
   useInterval(() => gameLoop(), speed);
 
@@ -39,12 +42,18 @@ export const Runner = () => {
     }
   }
 
-  const moveRunner = ({ keyCode }) => keyCode === 32 ? pauseGame() : (keyCode === 37 && keyCode === 39 && setDir(DIRECTIONS[keyCode]));
+  const moveRunner = ({ keyCode }) => keyCode === 32 ? pauseGame() : (keyCode > 36 && keyCode < 40 && setDir(DIRECTIONS[keyCode]));
 
   const gameLoop = () => {
     const newRunnerPlace = [runner[0] + dir[0], runner[1] + dir[1]];
-    setDir([0, 0]);
     setRunner(newRunnerPlace);
+    if (xMouse / SCALE - runner[0] > 1) {
+      setDir(DIRECTIONS[39])
+    } else if (runner[0] - xMouse / SCALE > 1) {
+      setDir(DIRECTIONS[37])
+    } else {
+      setDir([0, 0]);
+    }
   };
 
   const startGame = () => {
@@ -54,6 +63,10 @@ export const Runner = () => {
     setPause(false);
   };
 
+  const handleMouse = (e) => {
+    setXMouse(e.nativeEvent.offsetX)
+    setYMouse(e.nativeEvent.offsetY);
+  }
 
   useEffect(() => {
     const context = canvasRef.current.getContext("2d");
@@ -61,13 +74,19 @@ export const Runner = () => {
     context.clearRect(0, 0, window.innerWidth, window.innerHeight);
     context.fillStyle = "lightgreen";
     context.fillRect(0, 14, SCALE, 1);
-    context.fillStyle = runner[0] % 2 === 0 ? "red" : "blue";
+    context.fillStyle = "lightblue";
     context.fillRect(runner[0], runner[1], 1, 1);
   }, [runner, gameOver]);
 
   return (
-    <div role="button" tabIndex="0" onKeyDown={e => moveRunner(e)} className={style.container}>
+    <div
+      role="button"
+      tabIndex="0"
+      onKeyDown={e => moveRunner(e)}
+      className={style.container}
+    >
       <canvas
+        onMouseMove={(e) => handleMouse(e)}
         onClick={isStarted ? pauseGame :startGame}
         className={style.game}
         ref={canvasRef}
